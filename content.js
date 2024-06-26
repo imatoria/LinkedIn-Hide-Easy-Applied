@@ -30,7 +30,7 @@ function hideAppliedJobs() {
   // Rerun the HideAppliedJobs function if there are jobs to be hidden.
   window.setTimeout(() => {
     if (firstLoadCompleted == false) {
-      var jobCardsWrapper = document.querySelector(".jobs-search-results-list");
+      const jobCardsWrapper = document.querySelector(".jobs-search-results-list");
       jobCardsWrapper.scrollTop = 0;
     }
     jobCards = document.querySelectorAll(".jobs-search-results__list-item:not(.is-applied-parsed)");
@@ -50,7 +50,7 @@ window.addEventListener("load", function () {
   hideAppliedJobs();
 
   // Optionally, re-run the function when the user scrolls or interacts with the page
-  var jobCardsWrapper = document.querySelector(".jobs-search-results-list");
+  const jobCardsWrapper = document.querySelector(".jobs-search-results-list");
   if (jobCardsWrapper) jobCardsWrapper.addEventListener("scrollend", hideAppliedJobs);
   document.addEventListener("click", hideAppliedJobs);
 });
