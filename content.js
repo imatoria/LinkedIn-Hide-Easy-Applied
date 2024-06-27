@@ -4,6 +4,7 @@ let firstLoadCompleted = false;
 const MatchingData = {
   Applied: "Applied",
   WorkLocation: ["India (Remote)"],
+  DismissedJob: "We won’t show you this job again.",
 };
 
 const StaticText = {
@@ -15,6 +16,7 @@ const QuerySelector = {
   NotParsed: ":not(." + StaticText.IsAppliedParsed + ")",
   Applied: ".job-card-container__footer-item",
   WorkLocation: ".job-card-container__metadata-item",
+  DismissedJob: ".job-card-container__footer-item--highlighted",
 };
 
 // Function to hide jobs that have been applied to via Easy Apply
@@ -28,10 +30,12 @@ function hideAppliedJobs() {
     // Check if the job has been applied to via Easy Apply
     const appliedBadge = card.querySelector(QuerySelector.Applied);
     const workLocation = card.querySelector(QuerySelector.WorkLocation);
+    const dismissedJob = card.querySelector(QuerySelector.DismissedJob);
 
     if (
       (appliedBadge && appliedBadge.innerText.includes(MatchingData.Applied)) ||
-      (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText != x))
+      (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText != x)) ||
+      (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob))
     ) {
       // Remove the job card
       card.remove();
