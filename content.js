@@ -5,7 +5,18 @@ const MatchingData = {
   Applied: "Applied",
   WorkLocation: ["India (Remote)"],
   DismissedJob: "We won’t show you this job again.",
-  JobTitle: ["ServiceNow", "Service Now", "Optimizely"],
+  JobTitle: [
+    "ServiceNow",
+    "Service Now",
+    "Optimizely",
+    "Intern",
+    "Rust Developer",
+    "Python Developer",
+    "Data Scraping",
+    "Data scrape",
+    "Java Developer",
+    "Java Software Engineer",
+  ],
 };
 
 const StaticText = {
@@ -39,7 +50,7 @@ function hideAppliedJobs() {
       (appliedBadge && appliedBadge.innerText.includes(MatchingData.Applied)) ||
       (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText != x)) ||
       (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob)) ||
-      (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.indexOf(x) > -1))
+      (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.toLowerCase().indexOf(x.toLowerCase()) > -1))
     ) {
       jobTitle && console.log("LinkedIn Hide > " + jobTitle.innerText);
       // Remove the job card
