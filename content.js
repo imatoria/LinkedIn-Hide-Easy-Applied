@@ -5,6 +5,7 @@ const MatchingData = {
   Applied: "Applied",
   WorkLocation: ["India (Remote)"],
   DismissedJob: "We won’t show you this job again.",
+  JobTitle: ["ServiceNow", "Service Now", "Optimizely"],
 };
 
 const StaticText = {
@@ -17,6 +18,7 @@ const QuerySelector = {
   Applied: ".job-card-container__footer-item",
   WorkLocation: ".job-card-container__metadata-item",
   DismissedJob: ".job-card-container__footer-item--highlighted",
+  JobTitle: ".job-card-list__title--link strong",
 };
 
 // Function to hide jobs that have been applied to via Easy Apply
@@ -31,12 +33,15 @@ function hideAppliedJobs() {
     const appliedBadge = card.querySelector(QuerySelector.Applied);
     const workLocation = card.querySelector(QuerySelector.WorkLocation);
     const dismissedJob = card.querySelector(QuerySelector.DismissedJob);
+    const jobTitle = card.querySelector(QuerySelector.JobTitle);
 
     if (
       (appliedBadge && appliedBadge.innerText.includes(MatchingData.Applied)) ||
       (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText != x)) ||
-      (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob))
+      (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob)) ||
+      (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.indexOf(x) > -1))
     ) {
+      jobTitle && console.log("LinkedIn Hide > " + jobTitle.innerText);
       // Remove the job card
       card.remove();
       count++;
@@ -48,7 +53,7 @@ function hideAppliedJobs() {
     card.classList.add(StaticText.IsAppliedParsed);
   });
 
-  console.log("LinkedIn Hide > Easy Applied: " + count);
+  // console.log("LinkedIn Hide > Easy Applied: " + count);
 
   // Rerun the HideAppliedJobs function if there are jobs to be hidden.
   window.setTimeout(() => {
