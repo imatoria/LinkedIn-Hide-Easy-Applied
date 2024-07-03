@@ -3,7 +3,7 @@ let firstLoadCompleted = false;
 
 const MatchingData = {
   Applied: "Applied",
-  WorkLocation: ["India (Remote)"],
+  WorkLocation: ["India (Remote)", "Jaipur, Rajasthan, India (On-site)", "Jaipur, Rajasthan, India (Remote)"],
   DismissedJob: "We won’t show you this job again.",
   JobTitle: [
     "ServiceNow",
@@ -16,7 +16,14 @@ const MatchingData = {
     "Data scrape",
     "Java Developer",
     "Java Software Engineer",
+    "three.js developer",
+    "tester",
+    "sql developer",
+    "database developer",
+    "WPF developer",
+    "yonder developer",
   ],
+  CompanyName: ["Truelancer.com"],
 };
 
 const StaticText = {
@@ -30,6 +37,7 @@ const QuerySelector = {
   WorkLocation: ".job-card-container__metadata-item",
   DismissedJob: ".job-card-container__footer-item--highlighted",
   JobTitle: ".job-card-list__title--link strong",
+  CompanyName: ".job-card-container__primary-description",
 };
 
 // Function to hide jobs that have been applied to via Easy Apply
@@ -45,12 +53,14 @@ function hideAppliedJobs() {
     const workLocation = card.querySelector(QuerySelector.WorkLocation);
     const dismissedJob = card.querySelector(QuerySelector.DismissedJob);
     const jobTitle = card.querySelector(QuerySelector.JobTitle);
+    const companyName = card.querySelector(QuerySelector.JobTitle);
 
     if (
       (appliedBadge && appliedBadge.innerText.includes(MatchingData.Applied)) ||
       (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText != x)) ||
       (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob)) ||
-      (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.toLowerCase().indexOf(x.toLowerCase()) > -1))
+      (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.toLowerCase().indexOf(x.toLowerCase()) > -1)) ||
+      (companyName && MatchingData.CompanyName.some((x) => companyName.innerText == x))
     ) {
       jobTitle && console.log("LinkedIn Hide > " + jobTitle.innerText);
       // Remove the job card
@@ -76,7 +86,8 @@ function hideAppliedJobs() {
 
 function clickFirstJob() {
   window.scrollTo(window.scrollX, 0);
-  document.querySelector(QuerySelector.JobCardsScroller).scrollTo(0, 0);
+  const jobCardsScroller = document.querySelector(QuerySelector.JobCardsScroller);
+  if (jobCardsScroller) jobCardsScroller.scrollTo(0, 0);
 
   window.setTimeout(() => {
     if (firstNotAppliedJob) firstNotAppliedJob.click();
@@ -89,7 +100,7 @@ window.addEventListener("load", function () {
   hideAppliedJobs();
 
   // Optionally, re-run the function when the user scrolls or interacts with the page
-  const jobCardsScrollerr = document.querySelector(QuerySelector.JobCardsScroller);
-  if (jobCardsScrollerr) jobCardsScrollerr.addEventListener("scrollend", hideAppliedJobs);
+  const jobCardsScroller = document.querySelector(QuerySelector.JobCardsScroller);
+  if (jobCardsScroller) jobCardsScroller.addEventListener("scrollend", hideAppliedJobs);
   document.addEventListener("click", hideAppliedJobs);
 });
