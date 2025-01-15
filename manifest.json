@@ -1,16 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "LinkedIn Easy Apply Job Hider",
+  "name": "LinkedIn Easy Apply Automation",
   "version": "1.0",
-  "description": "Hide jobs you have already applied via Easy Apply on LinkedIn.",
-  "permissions": ["activeTab", "storage"],
+  "description": "Automate LinkedIn Easy Apply with UI controls.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://www.linkedin.com/jobs/*"],
+  "action": {
+    "default_icon": {
+      "48": "icon.png"
+    }
+  },
   "content_scripts": [
     {
-      "matches": ["*://*.linkedin.com/jobs/*"],
+      "matches": ["https://www.linkedin.com/jobs/*"],
+      "css": ["style.css"],
       "js": ["content.js"]
     }
   ],
-  "icons": {
-    "48": "icon.png"
-  }
+  "web_accessible_resources": [
+    {
+      "resources": ["alert.mp3"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

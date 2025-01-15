@@ -1,0 +1,77 @@
+#mLinkedInStatus {
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+#mLinkedinApplyUI #mLinkedInCount {
+  margin-top: 10px;
+  font-size: 12px;
+  color: gray;
+}
+
+/* Styles for the custom extension UI */
+#mLinkedinApplyUI {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 180px;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ddd;
+  z-index: 10000;
+  padding: 10px;
+  overflow: auto;
+}
+
+#mLinkedinApplyUI h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+#mLinkedinApplyUI #mLinkedInClose {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+}
+
+#mLinkedinApplyUI #mLinkedInClose:hover {
+  background-color: #0056b3;
+}
+
+#mLinkedinApplyUI p {
+  margin: 10px 0;
+}
+
+#mLinkedinApplyUI button#mLinkedInActionButton {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+
+#manual-next-button {
+  margin-left: 10px;
+  background-color: #0073b1; /* LinkedIn blue */
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#manual-next-button:hover {
+  background-color: #005582; /* Darker blue for hover effect */
+}
