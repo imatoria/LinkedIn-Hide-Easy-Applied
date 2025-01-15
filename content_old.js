@@ -45,7 +45,7 @@ function hideAppliedJobs() {
   let count = 0;
 
   // Select all job cards
-  let jobCards = document.querySelectorAll(QuerySelector.JobCards + QuerySelector.NotParsed);
+  let jobCards = document.querySelectorAll(QuerySelector.JobCards);
 
   jobCards.forEach((card) => {
     // Check if the job has been applied to via Easy Apply
@@ -53,7 +53,7 @@ function hideAppliedJobs() {
     const workLocation = card.querySelector(QuerySelector.WorkLocation);
     const dismissedJob = card.querySelector(QuerySelector.DismissedJob);
     const jobTitle = card.querySelector(QuerySelector.JobTitle);
-    const companyName = card.querySelector(QuerySelector.JobTitle);
+    const companyName = card.querySelector(QuerySelector.CompanyName);
 
     if (
       (appliedBadge && appliedBadge.innerText.includes(MatchingData.Applied)) ||

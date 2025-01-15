@@ -3,6 +3,120 @@
   let isStopped = true;
   let inProgress = false;
 
+  let firstNotAppliedJob = null;
+  let firstLoadCompleted = false;
+
+  const MatchingData = {
+    Applied: "Applied", //Fixed
+    WorkLocation: ["India (Remote)", "Jaipur, Rajasthan, India (On-site)", "Jaipur, Rajasthan, India (Remote)"], //Fixed
+    DismissedJob: "We won’t show you this job again.", //Fixed
+    JobTitle: [
+      //Fixed
+      "ServiceNow",
+      "Service Now",
+      "Optimizely",
+      "Intern",
+      "Rust Developer",
+      "Python Developer",
+      "Data Scraping",
+      "Data scrape",
+      "Java Developer",
+      "Java Software Engineer",
+      "three.js developer",
+      "tester",
+      "sql developer",
+      "database developer",
+      "WPF developer",
+      "yonder developer",
+    ],
+    CompanyName: ["Truelancer.com", "Mogi I/O : OTT/Podcast/Short Video Apps for you"], //Fixed
+  };
+
+  const StaticText = {
+    IsAppliedParsed: "is-applied-parsed", //Fixed
+  };
+  const QuerySelector = {
+    JobCardsScroller: ".scaffold-layout__list > div:nth-of-type(1)", //Fixed
+    JobCards: ".scaffold-layout__list-item", //Fixed
+    NotParsed: ":not(." + StaticText.IsAppliedParsed + ")", //Fixed
+    Applied: ".job-card-container__footer-job-state", //Fixed
+    WorkLocation: ".job-card-container__metadata-wrapper span", //Fixed
+    DismissedJob: ".job-card-container__footer-item--highlighted", //Fixed
+    JobTitle: ".job-card-list__title--link strong", //Fixed
+    CompanyName: ".artdeco-entity-lockup__subtitle span", //Fixed
+  };
+
+  // Function to hide jobs that have been applied to via Easy Apply
+  function hideAppliedJobs() {
+    let count = 0;
+
+    // Select all job cards
+    let jobCards = document.querySelectorAll(QuerySelector.JobCards);
+
+    jobCards.forEach((card) => {
+      // Check if the job has been applied to via Easy Apply
+      const appliedBadge = card.querySelector(QuerySelector.Applied);
+      const workLocation = card.querySelector(QuerySelector.WorkLocation);
+      const dismissedJob = card.querySelector(QuerySelector.DismissedJob);
+      const jobTitle = card.querySelector(QuerySelector.JobTitle);
+      const companyName = card.querySelector(QuerySelector.CompanyName);
+
+      if (
+        (appliedBadge && appliedBadge.innerText.trim() === MatchingData.Applied) ||
+        (workLocation && MatchingData.WorkLocation.every((x) => workLocation.innerText.trim() != x)) ||
+        (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob)) ||
+        (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.toLowerCase().indexOf(x.toLowerCase()) > -1)) ||
+        (companyName && MatchingData.CompanyName.some((x) => companyName.innerText == x))
+      ) {
+        jobTitle && log("LinkedIn Hide > " + jobTitle.innerText);
+        // Remove the job card
+        card.remove();
+        count++;
+      } else {
+        if (!firstNotAppliedJob) firstNotAppliedJob = card;
+      }
+
+      //Add that it is parsed to avoid parsing next time.
+      card.classList.add(StaticText.IsAppliedParsed);
+    });
+
+    // log("LinkedIn Hide > Easy Applied: " + count);
+
+    // Rerun the HideAppliedJobs function if there are jobs to be hidden.
+    window.setTimeout(() => {
+      jobCards = document.querySelectorAll(QuerySelector.JobCards + QuerySelector.NotParsed);
+      if (jobCards.length > 0) hideAppliedJobs();
+      else if (firstLoadCompleted == false) clickFirstJob();
+    }, 1000);
+  }
+
+  function clickFirstJob() {
+    window.scrollTo(window.scrollX, 0);
+    const jobCardsScroller = document.querySelector(QuerySelector.JobCardsScroller);
+    if (jobCardsScroller) jobCardsScroller.scrollTo(0, 0);
+
+    window.setTimeout(() => {
+      if (firstNotAppliedJob) firstNotAppliedJob.click();
+      firstLoadCompleted = true;
+    }, 500);
+  }
+
+  // Run the function when the page loads
+  window.addEventListener("load", function () {
+    hideAppliedJobs();
+
+    // Optionally, re-run the function when the user scrolls or interacts with the page
+    const jobCardsScroller = document.querySelector(QuerySelector.JobCardsScroller);
+    if (jobCardsScroller) jobCardsScroller.addEventListener("scrollend", hideAppliedJobs);
+    document.addEventListener("click", hideAppliedJobs);
+  });
+
+  // Check if the UI is already added
+  if (!document.getElementById("mLinkedinApplyUI")) {
+    // Inject the CSS file into the page
+    addInitialPopupUI();
+  }
+
   // Update status text in UI
   function updateStatus() {
     const statusElem = document.getElementById("mLinkedInStatus");
@@ -25,12 +139,6 @@
     isStopped = !isStopped;
     updateStatus();
     if (!inProgress) await processJobs();
-  }
-
-  // Check if the UI is already added
-  if (!document.getElementById("mLinkedinApplyUI")) {
-    // Inject the CSS file into the page
-    addInitialPopupUI();
   }
 
   function addInitialPopupUI() {
@@ -64,7 +172,6 @@
     inProgress = true;
 
     const jobCards = document.querySelectorAll(".job-card-container");
-    log("Total Jobs: " + jobCards.length);
     let appliedCount = 0;
     let failedCount = 0;
 
@@ -88,12 +195,17 @@
       updateCounts(appliedCount, failedCount);
 
       log("Completed Job Number: " + (i + 1));
+
+      delay(1000);
     }
 
-    // Show Automation has stopped
-    if (!isStopped) startStopHandler();
+    if (!isStopped && appliedCount > 0) await processJobs();
+    else {
+      // Show Automation has stopped
+      if (!isStopped) startStopHandler();
 
-    inProgress = false;
+      inProgress = false;
+    }
   }
 
   async function performWorkOnJob(jobCard) {
@@ -259,7 +371,7 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  function log(message) {
-    console.info("LinkedIn: ", message);
+  function log(message, args) {
+    console.info("LinkedIn: " + message, args);
   }
 })();
