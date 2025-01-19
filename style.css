@@ -1,8 +1,3 @@
-#mLinkedInStatus {
-  margin: 10px 0;
-  font-weight: bold;
-}
-
 #mLinkedinApplyUI #mLinkedInCount {
   margin-top: 10px;
   font-size: 12px;
@@ -14,49 +9,42 @@
   position: fixed;
   top: 10px;
   right: 10px;
-  width: 180px;
   background-color: #fff;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #ddd;
+  border: 1px solid #0a66c2;
   z-index: 10000;
-  padding: 10px;
+  border-radius: 3px;
   overflow: auto;
 }
 
 #mLinkedinApplyUI h3 {
   margin: 0;
   font-size: 18px;
+  background-color: #0a66c2;
+  color: #ffffff;
+  text-align: center;
+  padding: 10px;
 }
 
-#mLinkedinApplyUI #mLinkedInClose {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #f44336;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 5px;
-  cursor: pointer;
+#mLinkedInBody {
+  padding: 10px;
 }
 
-#mLinkedinApplyUI #mLinkedInClose:hover {
-  background-color: #0056b3;
-}
-
-#mLinkedinApplyUI p {
-  margin: 10px 0;
+#mLinkedInStatus {
+  text-align: center;
+  font-weight: bold;
 }
 
 #mLinkedinApplyUI button#mLinkedInActionButton {
   display: block;
   width: 100%;
-  margin-top: 20px;
-  padding: 10px 15px;
-  background-color: #007bff;
+  margin: 10px 0;
+  font-size: 15px;
+  padding: 10px 5px;
+  background-color: #0a66c2;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   text-align: center;
 }
