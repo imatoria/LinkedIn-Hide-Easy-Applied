@@ -49,6 +49,13 @@
   text-align: center;
 }
 
+#mLinkedinApplyUI th {
+  text-align: right;
+}
+#mLinkedinApplyUI td {
+  color: #000000;
+}
+
 #manual-next-button {
   margin-left: 10px;
   background-color: #0073b1; /* LinkedIn blue */

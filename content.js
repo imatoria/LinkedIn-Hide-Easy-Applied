@@ -44,6 +44,7 @@
     IsAppliedParsed: "is-applied-parsed",
     NotAcceptingApplications: "No longer accepting applications",
     AlreadyApplied: "Applied ",
+    EasyApplyDailyLimit: "You’ve reached the Easy Apply application limit for today",
   };
   const QuerySelector = {
     JobCardsScroller: ".scaffold-layout__list > div:nth-of-type(1)",
@@ -155,7 +156,7 @@
       const jobTitle = jobCard.querySelector(QuerySelector.JobTitle);
       const companyName = jobCard.querySelector(QuerySelector.CompanyName);
 
-      await scrollToElement(jobCard, document.querySelector(QuerySelector.JobCardsScroller));
+      await scrollToElement(jobCard); //document.querySelector(QuerySelector.JobCardsScroller)
 
       if (
         (appliedBadge && appliedBadge.innerText.trim() === MatchingData.Applied) || //IsAppliedParsed
@@ -200,10 +201,19 @@
 
       // Check if the job has already been applied to
       const jobStateElement = document.querySelector(QuerySelector.AlreadyApplied);
-      if (jobStateElement && jobStateElement.innerText.trim().startsWith(MatchingData.Applied)) {
-        log(`Job already applied. Skipping...`);
-        countSkipped++;
-        return null; // Skip the rest of the loop and go to the next iteration
+      if (jobStateElement) {
+        if (jobStateElement.innerText.trim().startsWith(MatchingData.Applied)) {
+          log(`Job already applied. Skipping...`);
+          countSkipped++;
+          return null; // Skip the rest of the loop and go to the next iteration
+        } else if (jobStateElement.innerText.trim().indexOf(StaticText.EasyApplyDailyLimit) > -1) {
+          log(`Easy Apply application limit for today. Stopping automation...`);
+
+          // Show Automation has stopped
+          if (!isStopped) startStopHandler();
+
+          return null; // Skip the rest of the loop and go to the next iteration
+        }
       }
 
       // Click Easy Apply button
@@ -263,6 +273,7 @@
     // Check for error messages
     const errorMessages = document.querySelectorAll(QuerySelector.ErrorMessages);
     if (errorMessages.length > 0) {
+      await scrollToElement(errorMessages[0]);
       log("Errors found. Avoiding submit button click.");
 
       // Check if "Next Manually" button already exists
@@ -273,6 +284,7 @@
       }
     } else if (submitButton.innerText.trim() !== "Submit application") {
       // Handle non-final submit buttons
+      await scrollToElement(submitButton);
       submitButton.click();
       log("Next/Review button clicked.");
     } else {
@@ -305,10 +317,12 @@
     // Untick the #follow-company-checkbox if present
     const followCheckbox = document.querySelector(QuerySelector.FollowCheckbox);
     if (followCheckbox && followCheckbox.checked) {
+      await scrollToElement(followCheckbox);
       log("Unticking follow company checkbox.");
       followCheckbox.click();
     }
 
+    await scrollToElement(submitButton);
     submitButton.click();
 
     return true;
@@ -320,8 +334,7 @@
     manualNextButton.textContent = "Manual Next";
 
     // Insert the button beside the current submit button
-    //submitButton.parentNode.insertBefore(manualNextButton, submitButton.nextSibling);
-    submitButton.insertAdjacentElement("afterend", manualNextButton);
+    submitButton.insertAdjacentElement("beforebegin", manualNextButton);
 
     log("Next Manually button added.");
 
@@ -329,7 +342,6 @@
     await new Promise((resolve) => {
       manualNextButton.addEventListener("click", () => {
         log("Next Manually button clicked. Resuming logic...");
-        //manualNextButton.remove(); // Remove the button after click
         resolve();
       });
     });
@@ -364,7 +376,14 @@
     });
   }
 
-  async function scrollToElement(element, container) {
+  async function scrollToElement(element) {
+    element.scrollIntoView({
+      behavior: "smooth", // Enables smooth scrolling
+      block: "center", // Aligns the element to the center of the container
+    });
+    await delay(1000);
+    return;
+
     // Get the element's position relative to the container
     const elementOffset = element.offsetTop;
 
@@ -374,7 +393,7 @@
     // Start scrolling the container to the target position
     container.scrollTo({
       top: targetScrollTop,
-      //behavior: "smooth", // Enables smooth scrolling
+      behavior: "smooth", // Enables smooth scrolling
     });
 
     await delay(1000);
