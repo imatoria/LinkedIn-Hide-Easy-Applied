@@ -4,7 +4,6 @@
   let inProgress = false;
 
   let countApplied = 0;
-  let countFailed = 0;
   let countSkipped = 0;
 
   const MatchingData = {
@@ -13,31 +12,46 @@
     WorkLocationIncludes: ["(Remote)", "Jaipur, Rajasthan, India (On-site)"],
     DismissedJob: "We won’t show you this job again.",
     JobTitle: [
-      "ServiceNow",
-      "Service Now",
-      "Optimizely",
-      "Intern",
-      "Rust Developer",
-      "Python Developer",
+      "AEM developer",
+      "Animation Developer",
+      "Blockchain",
+      "C developer",
+      "C++",
+      "Data Engineer",
       "Data Scraping",
       "Data scrape",
+      "D365",
+      "Drupal Developer",
+      "Dynamics",
+      "Embedded System",
+      "Golang",
+      "Intern",
       "Java Developer",
       "Java Software Engineer",
-      "three.js developer",
+      "Kotlin",
+      "Mern Stack Developer",
+      "MongoDB developer",
+      "Optimizely",
+      "Python Developer",
+      "Robotic",
+      "Rust Developer",
+      "Salesforce",
+      "Service Now",
+      "ServiceNow",
+      "Siebel Developer",
+      "Shopify",
+      "SQL developer",
       "tester",
-      "sql developer",
-      "database developer",
+      "test engineer",
+      "three.js developer",
+      "Unity developer",
+      "Vue JS",
+      "web 3",
+      "web3",
       "WPF developer",
       "yonder developer",
-      "Salesforce",
-      "Kotlin",
-      "Embedded System",
-      "Vue JS",
-      "Drupal Developer",
-      "Blockchain",
-      "Shopify",
     ],
-    CompanyName: ["Truelancer.com", "Mogi I/O : OTT/Podcast/Short Video Apps for you", "EPAM Systems", "Applicantz"],
+    CompanyName: ["Truelancer.com", "Mogi I/O : OTT/Podcast/Short Video Apps for you", "EPAM Systems", "Applicantz", "OptimHire"],
   };
 
   const StaticText = {
@@ -45,6 +59,8 @@
     NotAcceptingApplications: "No longer accepting applications",
     AlreadyApplied: "Applied ",
     EasyApplyDailyLimit: "You’ve reached the Easy Apply application limit for today",
+    ShowReasonClass: "show-reason",
+    AnsweredClass: "answered",
   };
   const QuerySelector = {
     JobCardsScroller: ".scaffold-layout__list > div:nth-of-type(1)",
@@ -56,6 +72,7 @@
     DismissedJob: ".job-card-container__footer-item--highlighted",
     JobTitle: ".job-card-list__title--link strong",
     CompanyName: ".artdeco-entity-lockup__subtitle span",
+    JobCardDialog: "[role='dialog']",
     ErrorMessages: "[data-test-form-element-error-messages]",
     ManualNext: "#manual-next-button",
     PostApplyModalClose: "button[data-test-modal-close-btn]",
@@ -69,6 +86,7 @@
     JobDetail: ".jobs-search__job-details",
     NotAcceptingApplications: ".jobs-details-top-card__apply-error",
     AlreadyApplied: ".artdeco-inline-feedback__message", //
+    DiscardJob: ".job-card-list__actions-container button[aria-label^='Dismiss']",
   };
 
   // Check if the UI is already added
@@ -82,18 +100,16 @@
     const statusElem = document.getElementById("mLinkedInStatus");
     statusElem.textContent = !isStopped ? "Running" : "Stopped";
 
-    const actionButton = document.getElementById("mLinkedInActionButton");
+    const actionButton = document.getElementById("mLinkedInButtonStart");
     actionButton.textContent = isStopped ? "Start" : "Stop";
   }
 
   // Update counts in UI
   function updateCounts() {
     const successCount = document.getElementById("mLinkedInSuccessCount");
-    const failCount = document.getElementById("mLinkedInFailCount");
     const skippedCount = document.getElementById("mLinkedInSkippedCount");
 
     successCount.innerText = countApplied;
-    failCount.innerText = countFailed;
     skippedCount.innerText = countSkipped;
   }
 
@@ -101,6 +117,14 @@
     isStopped = !isStopped;
     updateStatus();
     if (!inProgress) await processJobs();
+  }
+  async function pauseHandler() {}
+
+  async function discardHandler() {
+    isStopped = !isStopped;
+    updateStatus();
+    if (!inProgress) {
+    }
   }
 
   async function addInitialPopupUI() {
@@ -111,11 +135,12 @@
       <h3>mLinkedIn</h3>
       <div id="mLinkedInBody">
         <div id="mLinkedInStatus">Idle</div>
-        <button id="mLinkedInActionButton">Start</button>
+        <button id="mLinkedInButtonStart">Start</button>
+        <button id="mLinkedInButtonPause">Pause</button>
+        <button id="mLinkedInButtonDiscard">Discard</button>
         <table id="mLinkedInCount">
         <tbody>
           <tr><th>Applied</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInSuccessCount">0</td></tr>
-          <tr><th>Failed</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInFailCount">0</td></tr>
           <tr><th>Skipped</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInSkippedCount">0</td></tr>
         </tbody>
         </table>
@@ -127,10 +152,14 @@
 
     await delay(2000);
 
-    const actionButton = document.getElementById("mLinkedInActionButton");
+    const btnStart = document.getElementById("mLinkedInButtonStart");
+    const btnPause = document.getElementById("mLinkedInButtonPause");
+    const btnDicard = document.getElementById("mLinkedInButtonDiscard");
 
     // Button click listeners
-    actionButton.addEventListener("click", startStopHandler);
+    btnStart.addEventListener("click", startStopHandler);
+    btnPause.addEventListener("click", pauseHandler);
+    btnDicard.addEventListener("click", discardHandler);
   }
 
   // Function to hide jobs that have been applied to via Easy Apply
@@ -169,12 +198,38 @@
       ) {
         log("LinkedIn Hide > ", jobTitle && jobTitle.innerText, companyName && companyName.innerText);
         countSkipped++;
+
+        // Dismiss the job if it has not been applied to
+        if (appliedBadge && appliedBadge.innerText.trim() === MatchingData.Applied) {
+          appliedBadge.classList.add(StaticText.ShowReasonClass);
+          log("LinkedIn Hide > Already applied to job");
+        } else {
+          const discardButton = jobCard.querySelector(QuerySelector.DiscardJob);
+          if (discardButton) discardButton.click();
+
+          if (
+            workLocation &&
+            MatchingData.WorkLocationExcludes.every((x) => workLocation.innerText.trim().indexOf(x) > -1) &&
+            MatchingData.WorkLocationIncludes.every((x) => workLocation.innerText.trim().indexOf(x) == -1)
+          ) {
+            workLocation.classList.add(StaticText.ShowReasonClass);
+            log("LinkedIn Hide > Dismissed job due to location");
+          } else if (dismissedJob && dismissedJob.innerText.includes(MatchingData.DismissedJob)) {
+            dismissedJob.classList.add(StaticText.ShowReasonClass);
+            log("LinkedIn Hide > Dismissed job due to job status");
+          } else if (jobTitle && MatchingData.JobTitle.some((x) => jobTitle.innerText.toLowerCase().indexOf(x.toLowerCase()) > -1)) {
+            jobTitle.classList.add(StaticText.ShowReasonClass);
+            log("LinkedIn Hide > Dismissed job due to job title");
+          } else if (companyName && MatchingData.CompanyName.some((x) => companyName.innerText == x)) {
+            companyName.classList.add(StaticText.ShowReasonClass);
+            log("LinkedIn Hide > Dismissed job due to company name");
+          }
+        }
       } else {
         var jobStatus = await performWorkOnJob(jobCard);
 
-        if (jobStatus == null) continue;
-        else if (jobStatus) countApplied++;
-        else countFailed++;
+        if (jobStatus == false) continue;
+        else countApplied++;
 
         log("Job Completed.", "Job Status:", jobStatus ? "Success" : "Failed");
       }
@@ -192,95 +247,92 @@
   async function performWorkOnJob(jobCard) {
     jobCard = await waitForElement([QuerySelector.JobCardClickable], jobCard);
 
-    try {
-      // Open job details
-      jobCard.click();
-      log(`Opening job card...`);
+    // Open job details
+    jobCard.click();
+    log(`Opening job card...`);
 
-      await delay(1000);
+    await delay(1000);
 
-      // Check if the job has already been applied to
-      const jobStateElement = document.querySelector(QuerySelector.AlreadyApplied);
-      if (jobStateElement) {
-        if (jobStateElement.innerText.trim().startsWith(MatchingData.Applied)) {
-          log(`Job already applied. Skipping...`);
-          countSkipped++;
-          return null; // Skip the rest of the loop and go to the next iteration
-        } else if (jobStateElement.innerText.trim().indexOf(StaticText.EasyApplyDailyLimit) > -1) {
-          log(`Easy Apply application limit for today. Stopping automation...`);
-
-          // Show Automation has stopped
-          if (!isStopped) startStopHandler();
-
-          return null; // Skip the rest of the loop and go to the next iteration
-        }
-      }
-
-      // Click Easy Apply button
-      const easyApplyButton = await waitForElement([QuerySelector.EasyApplyButton]);
-      if (!easyApplyButton) {
-        log("Easy Apply button not found. Skipping...");
+    // Check if the job has already been applied to
+    const jobStateElement = document.querySelector(QuerySelector.AlreadyApplied);
+    if (jobStateElement) {
+      if (jobStateElement.innerText.trim().startsWith(MatchingData.Applied)) {
+        log(`Job already applied. Skipping...`);
         countSkipped++;
-        return null;
+        return false; // Skip the rest of the loop and go to the next iteration
+      } else if (jobStateElement.innerText.trim().indexOf(StaticText.EasyApplyDailyLimit) > -1) {
+        log(`Easy Apply application limit for today. Stopping automation...`);
+
+        // Show Automation has stopped
+        if (!isStopped) startStopHandler();
+
+        return false; // Skip the rest of the loop and go to the next iteration
       }
-      easyApplyButton.click();
+    }
 
-      log("Easy Apply button clicked.");
-
-      // Handle multi-page submission popup
-      let isSubmitComplete = false;
-
-      // Loop over  application steps iteratively in modal.
-      while (!isSubmitComplete) {
-        if (isStopped) {
-          log("Job automation stopped.");
-          break;
-        }
-        isSubmitComplete = await fillApplicationAndSubmit(isSubmitComplete);
-
-        if (isSubmitComplete === true) {
-          // Wait for the post-apply modal and close it
-          var isPostApplyProcessed = await postApplyModal();
-          if (!isPostApplyProcessed) return null; // Returning null to abort automation
-          await delay(1000);
-        }
-      }
-
-      log("Job applied successfully.");
-      return true;
-    } catch (error) {
-      console.error("Error applying for job:", error);
+    // Click Easy Apply button
+    const easyApplyButton = await waitForElement([QuerySelector.EasyApplyButton]);
+    if (!easyApplyButton) {
+      log("Easy Apply button not found. Skipping...");
+      countSkipped++;
       return false;
     }
+    easyApplyButton.click();
+
+    log("Easy Apply button clicked.");
+
+    // Handle multi-page submission popup
+    let isSubmitComplete = false;
+
+    // Loop over  application steps iteratively in modal.
+    while (!isSubmitComplete) {
+      if (isStopped) {
+        log("Job automation stopped.");
+        break;
+      }
+      isSubmitComplete = await fillApplicationAndSubmit(isSubmitComplete);
+    }
+
+    if (isSubmitComplete === true) {
+      // Wait for the post-apply modal and close it
+      var isPostApplyProcessed = await postApplyModal();
+      if (!isPostApplyProcessed) return false; // Returning null to abort automation
+      await delay(1000);
+    }
+
+    log("Job applied successfully.");
+    return true;
   }
 
   async function fillApplicationAndSubmit(isSubmitComplete) {
+    var jobCardDialog = await waitForElement([QuerySelector.JobCardDialog]);
+
     //Safety button :                             | data-live-test-job-apply-button
     //Next button   : data-easy-apply-next-button | data-live-test-easy-apply-next-button
     //Review button : data-easy-apply-next-button | data-live-test-easy-apply-review-button
     //Submit button :                             | data-live-test-easy-apply-submit-button
-    const submitButton = await waitForElement([
-      //QuerySelector.ApplySafetyButton,
-      QuerySelector.ApplyNextButton,
-      QuerySelector.ApplyReviewButton,
-      QuerySelector.ApplySubmitButton,
-    ]);
+    const submitButton = await waitForElement(
+      [QuerySelector.ApplySafetyButton, QuerySelector.ApplyNextButton, QuerySelector.ApplyReviewButton, QuerySelector.ApplySubmitButton],
+      jobCardDialog
+    );
 
-    if (!submitButton) return null;
+    if (!submitButton) return false;
 
     log("Next/Review/Submit button found.");
 
     // Check for error messages
-    const errorMessages = document.querySelectorAll(QuerySelector.ErrorMessages);
+    const errorMessages = jobCardDialog.querySelectorAll(QuerySelector.ErrorMessages);
     if (errorMessages.length > 0) {
       await scrollToElement(errorMessages[0]);
       log("Errors found. Avoiding submit button click.");
 
+      await addAnswersToKnownQuestions(errorMessages);
+
       // Check if "Next Manually" button already exists
-      let manualNextButton = document.querySelector(QuerySelector.ManualNext);
+      let manualNextButton = jobCardDialog.querySelector(QuerySelector.ManualNext);
       if (!manualNextButton) {
         // Create and add "Next Manually" button
-        manualNextButton = await addManualNextButton(manualNextButton, submitButton);
+        await addManualNextButton(submitButton);
       }
     } else if (submitButton.innerText.trim() !== "Submit application") {
       // Handle non-final submit buttons
@@ -289,7 +341,8 @@
       log("Next/Review button clicked.");
     } else {
       // If this is the final submit button
-      isSubmitComplete = await submitApplication(submitButton);
+      await submitApplication(submitButton);
+      isSubmitComplete = true;
     }
 
     await delay(1000); // Wait for the next page or action to load
@@ -324,12 +377,10 @@
 
     await scrollToElement(submitButton);
     submitButton.click();
-
-    return true;
   }
 
-  async function addManualNextButton(manualNextButton, submitButton) {
-    manualNextButton = document.createElement("button");
+  async function addManualNextButton(submitButton) {
+    var manualNextButton = document.createElement("button");
     manualNextButton.id = QuerySelector.ManualNext.substring(1);
     manualNextButton.textContent = "Manual Next";
 
@@ -345,7 +396,103 @@
         resolve();
       });
     });
-    return manualNextButton;
+  }
+
+  async function addAnswersToKnownQuestions(errorMessages) {
+    // Get label element which is under same parent but one of the previous siblings as the errorMessage element
+    for (let i = 0; i < errorMessages.length; i++) {
+      const parentElement = errorMessages[i].parentElement.parentElement;
+      const questionLabel = parentElement.querySelector("label");
+      const answerTextbox = parentElement.querySelector("input[type='text']");
+      const answerRadio = parentElement.querySelector("input[type='radio']");
+      const answerSelect = parentElement.querySelector("select");
+
+      if (!questionLabel) continue;
+
+      const question = questionLabel.innerText.toLowerCase();
+
+      try {
+        if (answerTextbox) {
+          if (question.indexOf("current ctc") > -1 || question.indexOf("cctc") > -1 || question.indexOf("your ctc") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "3600000");
+          } else if (
+            question.indexOf("expected ctc") > -1 ||
+            question.indexOf("ectc") > -1 ||
+            question.indexOf("expected salary") > -1 ||
+            question.indexOf("salary expectation") > -1
+          ) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "4200000");
+          } else if (question.indexOf("location") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "Jaipur");
+          } else if (question.indexOf("join") > -1 || question.indexOf("notice period") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "7");
+          } else if (question.indexOf("immediate basis") > -1 || question.indexOf("notice period") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "7");
+          }
+        } else if (answerSelect) {
+          if (question.indexOf("immediate basis") > -1 || question.indexOf("start immediately") > -1) {
+            addAnsweredClass(questionLabel);
+            answerSelect.selectedIndex = 1;
+          }
+        }
+      } catch (ex) {
+        log("Error while adding answers to known questions.", ex);
+      }
+    }
+  }
+
+  function simulateTyping(textbox, text, delay = 200) {
+    return new Promise((resolve, reject) => {
+      var len = text.length;
+      textbox.focus();
+
+      let index = 0;
+      const intervalId = setInterval(() => {
+        if (index >= len) {
+          clearInterval(intervalId);
+          //textbox.blur();
+          resolve();
+          return;
+        }
+
+        var key = text.charAt(index);
+        const keydownEvent = new KeyboardEvent("keydown", {
+          key: key,
+          code: key,
+          bubbles: true,
+        });
+
+        textbox.dispatchEvent(keydownEvent);
+
+        // Update the input field value
+        textbox.value += key;
+
+        // Create and dispatch an input event
+        const inputEvent = new InputEvent("input", {
+          bubbles: true,
+        });
+        textbox.dispatchEvent(inputEvent);
+
+        // Create and dispatch a keyup event
+        const keyupEvent = new KeyboardEvent("keyup", {
+          key: key,
+          code: key,
+          bubbles: true,
+        });
+        textbox.dispatchEvent(keyupEvent);
+
+        index++;
+      }, delay);
+    });
+  }
+
+  function addAnsweredClass(questionLabel) {
+    questionLabel.classList.add(StaticText.AnsweredClass);
   }
 
   // Utility function: Wait for a specific DOM element to appear
@@ -365,8 +512,10 @@
         const element = selectors.map((selector) => context.querySelector(selector)).find((el) => el !== null);
 
         if (element) {
+          //log("Found Element: ", ...selectors);
           resolve(element);
         } else if (Date.now() > endTime) {
+          //log("Failed to find Element: ", ...selectors);
           resolve(null); // Return null if the element is not found
         } else {
           log("Waiting for: ", ...selectors);
@@ -381,21 +530,6 @@
       behavior: "smooth", // Enables smooth scrolling
       block: "center", // Aligns the element to the center of the container
     });
-    await delay(1000);
-    return;
-
-    // Get the element's position relative to the container
-    const elementOffset = element.offsetTop;
-
-    // Define the target scroll position
-    const targetScrollTop = elementOffset;
-
-    // Start scrolling the container to the target position
-    container.scrollTo({
-      top: targetScrollTop,
-      behavior: "smooth", // Enables smooth scrolling
-    });
-
     await delay(1000);
   }
 

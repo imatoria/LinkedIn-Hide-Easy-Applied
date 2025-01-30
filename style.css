@@ -35,7 +35,7 @@
   font-weight: bold;
 }
 
-#mLinkedinApplyUI button#mLinkedInActionButton {
+#mLinkedinApplyUI button {
   display: block;
   width: 100%;
   margin: 10px 0;
@@ -49,6 +49,11 @@
   text-align: center;
 }
 
+#mLinkedinApplyUI #mLinkedInButtonPause,
+#mLinkedinApplyUI #mLinkedInButtonDiscard {
+  display: none;
+}
+
 #mLinkedinApplyUI th {
   text-align: right;
 }
@@ -57,7 +62,7 @@
 }
 
 #manual-next-button {
-  margin-left: 10px;
+  margin: 0 10px;
   background-color: #0073b1; /* LinkedIn blue */
   color: #fff;
   padding: 8px 16px;
@@ -69,4 +74,17 @@
 
 #manual-next-button:hover {
   background-color: #005582; /* Darker blue for hover effect */
+}
+
+#manual-next-button + button {
+  display: none;
+}
+
+.show-reason {
+  color: red !important;
+  text-decoration: line-through;
+}
+
+.answered {
+  color: green !important;
 }
