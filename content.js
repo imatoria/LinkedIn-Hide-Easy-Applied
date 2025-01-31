@@ -17,6 +17,7 @@
       "Blockchain",
       "C developer",
       "C++",
+      "CUDA",
       "Data Engineer",
       "Data Scraping",
       "Data scrape",
@@ -30,7 +31,9 @@
       "Java Software Engineer",
       "Kotlin",
       "Mern Stack Developer",
+      "Mobile App Developer",
       "MongoDB developer",
+      "Native React",
       "Optimizely",
       "Python Developer",
       "Robotic",
@@ -413,7 +416,12 @@
 
       try {
         if (answerTextbox) {
-          if (question.indexOf("current ctc") > -1 || question.indexOf("cctc") > -1 || question.indexOf("your ctc") > -1) {
+          if (
+            question.indexOf("current ctc") > -1 ||
+            question.indexOf("cctc") > -1 ||
+            question.indexOf("your ctc") > -1 ||
+            question.indexOf("current annual compensation") > -1
+          ) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "3600000");
           } else if (
@@ -433,6 +441,21 @@
           } else if (question.indexOf("immediate basis") > -1 || question.indexOf("notice period") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "7");
+          } else if (question.indexOf("experience") > -1 && (question.indexOf("reactjs") > -1 || question.indexOf("react.js") > -1)) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "3");
+          } else if (question.indexOf("experience") > -1 && question.indexOf("net core") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "7");
+          } else if (question.indexOf("experience") > -1 && question.indexOf("angular") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "0");
+          } else if (question.indexOf("experience") > -1 && question.indexOf("fullstack development") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "17");
+          } else if (question.indexOf("linkedIn profile") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "https://www.linkedin.com/in/imatoria/");
           }
         } else if (answerSelect) {
           if (question.indexOf("immediate basis") > -1 || question.indexOf("start immediately") > -1) {
