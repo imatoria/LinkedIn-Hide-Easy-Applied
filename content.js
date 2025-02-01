@@ -22,6 +22,7 @@
       "Data Scraping",
       "Data scrape",
       "D365",
+      "D 365 Developer",
       "Drupal Developer",
       "Dynamics",
       "Embedded System",
@@ -228,11 +229,18 @@
             log("LinkedIn Hide > Dismissed job due to company name");
           }
         }
+      } else if (companyName && checkIfAlreadyAppliedInPast(companyName.innerText)) {
+        companyName.classList.add(StaticText.ShowReasonClass);
+        log("LinkedIn Hide > Already applied to job in past");
+        countSkipped++;
       } else {
         var jobStatus = await performWorkOnJob(jobCard);
 
         if (jobStatus == false) continue;
-        else countApplied++;
+
+        if (companyName) addAppliedCriteria(companyName.innerText);
+
+        countApplied++;
 
         log("Job Completed.", "Job Status:", jobStatus ? "Success" : "Failed");
       }
@@ -420,7 +428,8 @@
             question.indexOf("current ctc") > -1 ||
             question.indexOf("cctc") > -1 ||
             question.indexOf("your ctc") > -1 ||
-            question.indexOf("current annual compensation") > -1
+            question.indexOf("current annual compensation") > -1 ||
+            question.indexOf("Current Cost to Company") > -1
           ) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "3600000");
@@ -428,7 +437,8 @@
             question.indexOf("expected ctc") > -1 ||
             question.indexOf("ectc") > -1 ||
             question.indexOf("expected salary") > -1 ||
-            question.indexOf("salary expectation") > -1
+            question.indexOf("salary expectation") > -1 ||
+            question.indexOf("Expected Cost to Company") > -1
           ) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "4200000");
@@ -450,6 +460,9 @@
           } else if (question.indexOf("experience") > -1 && question.indexOf("angular") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "0");
+          } else if (question.indexOf("experience") > -1 && question.indexOf("vue.js") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "0");
           } else if (question.indexOf("experience") > -1 && question.indexOf("fullstack development") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "17");
@@ -467,6 +480,64 @@
         log("Error while adding answers to known questions.", ex);
       }
     }
+  }
+
+  function checkIfAlreadyAppliedInPast(companyName) {
+    //{"truelancer": ["20", "21"], "source": ["5"]}
+    var linkedInStorage = localStorage.getItem("LinkedInAutomation");
+    if (!linkedInStorage) return false;
+
+    var appliedCompanies = JSON.parse(linkedInStorage);
+    if (appliedCompanies[companyName] == null) return false;
+
+    // 28/07/2025
+    const today = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    if (appliedCompanies[companyName].includes(today)) return true;
+
+    // Parse each entry in the list for the company and find how many times has the user applied in last 30 days
+    var appliedCount = 0;
+    appliedCompanies[companyName].forEach((date) => {
+      const dateParts = date.split("/");
+      const dateObj = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+      const todayObj = new Date();
+
+      const diffTime = Math.abs(todayObj - dateObj);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 30) appliedCount++;
+    });
+
+    return appliedCount >= 5;
+  }
+
+  function addAppliedCriteria(companyName) {
+    //{"truelancer": ["20", "21"], "source": ["5"]}
+    var linkedInStorage = localStorage.getItem("LinkedInAutomation");
+    if (!linkedInStorage) linkedInStorage = "{}";
+
+    var appliedCompanies = JSON.parse(linkedInStorage);
+    if (appliedCompanies[companyName] == null) {
+      appliedCompanies[companyName] = [];
+    }
+
+    // Add today's date to the list of applied dates for the company
+    const today = new Date().toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    // Skip adding the same date again to the list of applied dates for the company
+    if (appliedCompanies[companyName].includes(today)) return;
+
+    appliedCompanies[companyName].push(today);
+
+    localStorage.setItem("LinkedInAutomation", JSON.stringify(appliedCompanies));
   }
 
   function simulateTyping(textbox, text, delay = 200) {
