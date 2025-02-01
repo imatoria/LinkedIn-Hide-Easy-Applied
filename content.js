@@ -65,6 +65,7 @@
     EasyApplyDailyLimit: "You’ve reached the Easy Apply application limit for today",
     ShowReasonClass: "show-reason",
     AnsweredClass: "answered",
+    AppliedReasonClass: "applied-reason",
   };
   const QuerySelector = {
     JobCardsScroller: ".scaffold-layout__list > div:nth-of-type(1)",
@@ -230,7 +231,7 @@
           }
         }
       } else if (companyName && checkIfAlreadyAppliedInPast(companyName.innerText)) {
-        companyName.classList.add(StaticText.ShowReasonClass);
+        companyName.classList.add(StaticText.AppliedReasonClass);
         log("LinkedIn Hide > Already applied to job in past");
         countSkipped++;
       } else {

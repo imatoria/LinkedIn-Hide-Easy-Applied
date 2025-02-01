@@ -85,6 +85,11 @@
   text-decoration: line-through;
 }
 
+.applied-reason {
+  color: green !important;
+  text-decoration: line-through;
+}
+
 .answered {
   color: green !important;
 }
