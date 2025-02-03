@@ -50,8 +50,12 @@
 }
 
 #mLinkedinApplyUI #mLinkedInButtonPause,
-#mLinkedinApplyUI #mLinkedInButtonDiscard {
+#mLinkedinApplyUI #mLinkedInButtonDismiss {
   display: none;
+}
+
+.d-block {
+  display: block !important;
 }
 
 #mLinkedinApplyUI th {

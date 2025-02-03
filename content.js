@@ -2,6 +2,7 @@
   // Variables to track script state
   let isStopped = true;
   let inProgress = false;
+  let isDismissable = false;
 
   let countApplied = 0;
   let countSkipped = 0;
@@ -15,6 +16,7 @@
       "AEM developer",
       "Animation Developer",
       "Blockchain",
+      "Bubble.io",
       "C developer",
       "C++",
       "CUDA",
@@ -26,6 +28,7 @@
       "Drupal Developer",
       "Dynamics",
       "Embedded System",
+      "Flutter",
       "Golang",
       "Intern",
       "Java Developer",
@@ -35,6 +38,7 @@
       "Mobile App Developer",
       "MongoDB developer",
       "Native React",
+      "Odoo",
       "Optimizely",
       "Python Developer",
       "Robotic",
@@ -80,18 +84,20 @@
     JobCardDialog: "[role='dialog']",
     ErrorMessages: "[data-test-form-element-error-messages]",
     ManualNext: "#manual-next-button",
-    PostApplyModalClose: "button[data-test-modal-close-btn]",
+    ModalClose: "button[data-test-modal-close-btn]",
     FollowCheckbox: "#follow-company-checkbox",
     EasyApplyButton: ".jobs-apply-button",
     ApplySafetyButton: "button[data-live-test-job-apply-button]",
     ApplyNextButton: "button[data-live-test-easy-apply-next-button]",
     ApplyReviewButton: "button[data-live-test-easy-apply-review-button]",
     ApplySubmitButton: "button[data-live-test-easy-apply-submit-button]",
+    ApplicationModal: "[aria-labelledby='jobs-apply-header']",
+    DiscardApplicationButton: "button[data-test-dialog-secondary-btn]",
     PostApplyModal: "[aria-labelledby='post-apply-modal']",
     JobDetail: ".jobs-search__job-details",
     NotAcceptingApplications: ".jobs-details-top-card__apply-error",
     AlreadyApplied: ".artdeco-inline-feedback__message", //
-    DiscardJob: ".job-card-list__actions-container button[aria-label^='Dismiss']",
+    DismissJob: ".job-card-list__actions-container button[aria-label^='Dismiss']",
   };
 
   // Check if the UI is already added
@@ -125,11 +131,33 @@
   }
   async function pauseHandler() {}
 
-  async function discardHandler() {
-    isStopped = !isStopped;
-    updateStatus();
-    if (!inProgress) {
+  async function dismissHandler() {
+    isDismissable = true;
+
+    // Check if "Next Manually" button already exists
+    let manualNextButton = document.querySelector(QuerySelector.ManualNext);
+    if (manualNextButton) {
+      manualNextButton.click();
+      // Now the while loop will run and stop at `waitForDismissableToFalse` function
+      // which require `isDismissable` to be false to continue
     }
+
+    // Close the modal
+    await closeModal(QuerySelector.ApplicationModal);
+
+    var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton]);
+    discardButton.click();
+
+    await delay(1000);
+
+    isDismissable = false;
+  }
+
+  async function toggleDismissButton(show) {
+    const btnDismiss = document.getElementById("mLinkedInButtonDismiss");
+    btnDismiss.classList.toggle("d-block", show);
+
+    await delay(200);
   }
 
   async function addInitialPopupUI() {
@@ -142,7 +170,7 @@
         <div id="mLinkedInStatus">Idle</div>
         <button id="mLinkedInButtonStart">Start</button>
         <button id="mLinkedInButtonPause">Pause</button>
-        <button id="mLinkedInButtonDiscard">Discard</button>
+        <button id="mLinkedInButtonDismiss">Dismiss</button>
         <table id="mLinkedInCount">
         <tbody>
           <tr><th>Applied</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInSuccessCount">0</td></tr>
@@ -159,12 +187,15 @@
 
     const btnStart = document.getElementById("mLinkedInButtonStart");
     const btnPause = document.getElementById("mLinkedInButtonPause");
-    const btnDicard = document.getElementById("mLinkedInButtonDiscard");
+    const btnDismiss = document.getElementById("mLinkedInButtonDismiss");
 
     // Button click listeners
     btnStart.addEventListener("click", startStopHandler);
     btnPause.addEventListener("click", pauseHandler);
-    btnDicard.addEventListener("click", discardHandler);
+    btnDismiss.addEventListener("click", () => {
+      toggleDismissButton(false);
+      dismissHandler();
+    });
   }
 
   // Function to hide jobs that have been applied to via Easy Apply
@@ -209,8 +240,8 @@
           appliedBadge.classList.add(StaticText.ShowReasonClass);
           log("LinkedIn Hide > Already applied to job");
         } else {
-          const discardButton = jobCard.querySelector(QuerySelector.DiscardJob);
-          if (discardButton) discardButton.click();
+          const dismissButton = jobCard.querySelector(QuerySelector.DismissJob);
+          if (dismissButton) dismissButton.click();
 
           if (
             workLocation &&
@@ -295,20 +326,31 @@
 
     // Handle multi-page submission popup
     let isSubmitComplete = false;
+    toggleDismissButton(true);
 
     // Loop over  application steps iteratively in modal.
     while (!isSubmitComplete) {
       if (isStopped) {
         log("Job automation stopped.");
         break;
+      } else if (isDismissable) {
+        await waitForDismissableToFalse();
+
+        const dismissButton = jobCard.querySelector(QuerySelector.DismissJob);
+        if (dismissButton) dismissButton.click();
+
+        log("Job application dismissed.");
+        break;
       }
+
       isSubmitComplete = await fillApplicationAndSubmit(isSubmitComplete);
     }
 
+    toggleDismissButton(false);
+
     if (isSubmitComplete === true) {
       // Wait for the post-apply modal and close it
-      var isPostApplyProcessed = await postApplyModal();
-      if (!isPostApplyProcessed) return false; // Returning null to abort automation
+      await closeModal(QuerySelector.PostApplyModal);
       await delay(1000);
     }
 
@@ -331,6 +373,8 @@
     if (!submitButton) return false;
 
     log("Next/Review/Submit button found.");
+
+    await delay(1000); // Wait for the next page or action to load
 
     // Check for error messages
     const errorMessages = jobCardDialog.querySelectorAll(QuerySelector.ErrorMessages);
@@ -357,23 +401,16 @@
       isSubmitComplete = true;
     }
 
-    await delay(1000); // Wait for the next page or action to load
-
     return isSubmitComplete; // Don't skip current iteration of the while loop
   }
 
-  async function postApplyModal() {
-    log("Waiting for post-apply modal...");
-    const postApplyModal = await waitForElement([QuerySelector.PostApplyModal]);
-    if (!postApplyModal) return;
+  async function closeModal(modalIdentifier) {
+    log("Waiting for modal...");
+    const modal = await waitForElement([modalIdentifier]);
 
-    log("Post-apply modal found. Closing it...");
-    const closeButton = await waitForElement([QuerySelector.PostApplyModalClose], postApplyModal);
-    if (closeButton) {
-      closeButton.click();
-      log("Post-apply modal closed.");
-    }
-    return true;
+    log("Modal found. Closing it...");
+    const closeButton = await waitForElement([QuerySelector.ModalClose], modal);
+    closeButton.click();
   }
 
   async function submitApplication(submitButton) {
@@ -467,6 +504,9 @@
           } else if (question.indexOf("experience") > -1 && question.indexOf("fullstack development") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "17");
+          } else if (question.indexOf("experience") > -1 && question.indexOf("Ruby on Rails") > -1) {
+            addAnsweredClass(questionLabel);
+            await simulateTyping(answerTextbox, "0");
           } else if (question.indexOf("linkedIn profile") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "https://www.linkedin.com/in/imatoria/");
@@ -588,6 +628,21 @@
 
   function addAnsweredClass(questionLabel) {
     questionLabel.classList.add(StaticText.AnsweredClass);
+  }
+
+  // Utility function: Wait until the isDimissible flag is changed to false
+  function waitForDismissableToFalse() {
+    return new Promise((resolve, reject) => {
+      const interval = 1000; // Check every 1000ms
+
+      (function checkDismissable() {
+        if (!isDismissable) {
+          resolve();
+        } else {
+          setTimeout(checkDismissable, interval);
+        }
+      })();
+    });
   }
 
   // Utility function: Wait for a specific DOM element to appear
