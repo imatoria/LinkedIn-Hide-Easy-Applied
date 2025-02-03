@@ -2,10 +2,12 @@
   // Variables to track script state
   let isStopped = true;
   let inProgress = false;
-  let isDismissable = false;
+  let isSkipped = false;
+  let isDismissed = false;
 
   let countApplied = 0;
   let countSkipped = 0;
+  let countDismissed = 0;
 
   const MatchingData = {
     Applied: "Applied",
@@ -119,9 +121,11 @@
   function updateCounts() {
     const successCount = document.getElementById("mLinkedInSuccessCount");
     const skippedCount = document.getElementById("mLinkedInSkippedCount");
+    const dismissedCount = document.getElementById("mLinkedInDismissedCount");
 
     successCount.innerText = countApplied;
     skippedCount.innerText = countSkipped;
+    dismissedCount.innerText = countDismissed;
   }
 
   async function startStopHandler() {
@@ -129,33 +133,39 @@
     updateStatus();
     if (!inProgress) await processJobs();
   }
-  async function pauseHandler() {}
 
-  async function dismissHandler() {
-    isDismissable = true;
+  async function skipOrDismissHandler(toBeSkipped, toBeDismissed) {
+    if (toBeSkipped) isSkipped = toBeSkipped;
+    if (toBeDismissed) isDismissed = toBeDismissed;
 
     // Check if "Next Manually" button already exists
     let manualNextButton = document.querySelector(QuerySelector.ManualNext);
     if (manualNextButton) {
       manualNextButton.click();
-      // Now the while loop will run and stop at `waitForDismissableToFalse` function
-      // which require `isDismissable` to be false to continue
+      // Now the while loop will run and stop at `waitForIsSkippedToFalse / waitForDismissableToFalse` function
+      // which require `isSkipped / isDismissed` to be false to continue
     }
 
     // Close the modal
     await closeModal(QuerySelector.ApplicationModal);
 
-    var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton]);
-    discardButton.click();
+    if (toBeDismissed) {
+      var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton]);
+      discardButton.click();
+    }
 
     await delay(1000);
 
-    isDismissable = false;
+    if (toBeSkipped) isSkipped = false;
+    if (toBeDismissed) isDismissed = false;
   }
 
-  async function toggleDismissButton(show) {
+  async function toggleSkipAndDismissButton(toShow) {
+    const btnSkip = document.getElementById("mLinkedInButtonSkip");
+    btnSkip.classList.toggle("d-block", toShow);
+
     const btnDismiss = document.getElementById("mLinkedInButtonDismiss");
-    btnDismiss.classList.toggle("d-block", show);
+    btnDismiss.classList.toggle("d-block", toShow);
 
     await delay(200);
   }
@@ -169,12 +179,13 @@
       <div id="mLinkedInBody">
         <div id="mLinkedInStatus">Idle</div>
         <button id="mLinkedInButtonStart">Start</button>
-        <button id="mLinkedInButtonPause">Pause</button>
-        <button id="mLinkedInButtonDismiss">Dismiss</button>
+        <button id="mLinkedInButtonSkip" class="d-none">Skip</button>
+        <button id="mLinkedInButtonDismiss" class="d-none">Dismiss</button>
         <table id="mLinkedInCount">
         <tbody>
           <tr><th>Applied</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInSuccessCount">0</td></tr>
           <tr><th>Skipped</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInSkippedCount">0</td></tr>
+          <tr><th>Dismissed</th><td>&nbsp;:&nbsp;</td><td id="mLinkedInDismissedCount">0</td></tr>
         </tbody>
         </table>
       </div>
@@ -186,15 +197,18 @@
     await delay(2000);
 
     const btnStart = document.getElementById("mLinkedInButtonStart");
-    const btnPause = document.getElementById("mLinkedInButtonPause");
+    const btnSkip = document.getElementById("mLinkedInButtonSkip");
     const btnDismiss = document.getElementById("mLinkedInButtonDismiss");
 
     // Button click listeners
     btnStart.addEventListener("click", startStopHandler);
-    btnPause.addEventListener("click", pauseHandler);
+    btnSkip.addEventListener("click", () => {
+      toggleSkipAndDismissButton(false);
+      skipOrDismissHandler(true, false);
+    });
     btnDismiss.addEventListener("click", () => {
-      toggleDismissButton(false);
-      dismissHandler();
+      toggleSkipAndDismissButton(false);
+      skipOrDismissHandler(false, true);
     });
   }
 
@@ -326,15 +340,21 @@
 
     // Handle multi-page submission popup
     let isSubmitComplete = false;
-    toggleDismissButton(true);
+    toggleSkipAndDismissButton(true);
 
     // Loop over  application steps iteratively in modal.
     while (!isSubmitComplete) {
       if (isStopped) {
         log("Job automation stopped.");
         break;
-      } else if (isDismissable) {
-        await waitForDismissableToFalse();
+      } else if (isSkipped) {
+        await waitForSkippOrDismissedToFalse();
+        countSkipped++;
+        log("Job application skipped.");
+        break;
+      } else if (isDismissed) {
+        await waitForSkippOrDismissedToFalse();
+        countDismissed++;
 
         const dismissButton = jobCard.querySelector(QuerySelector.DismissJob);
         if (dismissButton) dismissButton.click();
@@ -346,7 +366,7 @@
       isSubmitComplete = await fillApplicationAndSubmit(isSubmitComplete);
     }
 
-    toggleDismissButton(false);
+    toggleSkipAndDismissButton(false);
 
     if (isSubmitComplete === true) {
       // Wait for the post-apply modal and close it
@@ -630,16 +650,14 @@
     questionLabel.classList.add(StaticText.AnsweredClass);
   }
 
-  // Utility function: Wait until the isDimissible flag is changed to false
-  function waitForDismissableToFalse() {
+  // Utility function: Wait until the isSkipped / isDimissed flag is changed to false
+  function waitForSkippOrDismissedToFalse() {
     return new Promise((resolve, reject) => {
-      const interval = 1000; // Check every 1000ms
-
-      (function checkDismissable() {
-        if (!isDismissable) {
+      (function check() {
+        if (!isSkipped && !isDismissed) {
           resolve();
         } else {
-          setTimeout(checkDismissable, interval);
+          setTimeout(check, 1000);
         }
       })();
     });

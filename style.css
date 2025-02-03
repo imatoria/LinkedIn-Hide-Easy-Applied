@@ -49,9 +49,8 @@
   text-align: center;
 }
 
-#mLinkedinApplyUI #mLinkedInButtonPause,
-#mLinkedinApplyUI #mLinkedInButtonDismiss {
-  display: none;
+.d-none {
+  display: none !important;
 }
 
 .d-block {
