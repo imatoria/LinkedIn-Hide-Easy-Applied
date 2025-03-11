@@ -61,7 +61,15 @@
       "WPF developer",
       "yonder developer",
     ],
-    CompanyName: ["Truelancer.com", "Mogi I/O : OTT/Podcast/Short Video Apps for you", "EPAM Systems", "Applicantz", "OptimHire"],
+    CompanyName: [
+      "Truelancer.com",
+      "Mogi I/O : OTT/Podcast/Short Video Apps for you",
+      "EPAM Systems",
+      "Applicantz",
+      "OptimHire",
+      "Beesolver Technology Pvt Ltd",
+      "DravinTech",
+    ],
   };
 
   const StaticText = {
@@ -138,8 +146,10 @@
     if (toBeSkipped) isSkipped = toBeSkipped;
     if (toBeDismissed) isDismissed = toBeDismissed;
 
+    var jobCardDialog = await waitForElement([QuerySelector.JobCardDialog]);
+
     // Check if "Next Manually" button already exists
-    let manualNextButton = document.querySelector(QuerySelector.ManualNext);
+    let manualNextButton = jobCardDialog.querySelector(QuerySelector.ManualNext);
     if (manualNextButton) {
       manualNextButton.click();
       // Now the while loop will run and stop at `waitForIsSkippedToFalse / waitForDismissableToFalse` function
@@ -149,10 +159,8 @@
     // Close the modal
     await closeModal(QuerySelector.ApplicationModal);
 
-    if (toBeDismissed) {
-      var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton]);
-      discardButton.click();
-    }
+    var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton], jobCardDialog);
+    discardButton.click();
 
     await delay(1000);
 
