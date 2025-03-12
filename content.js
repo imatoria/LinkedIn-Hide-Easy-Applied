@@ -21,6 +21,7 @@
       "Bubble.io",
       "C developer",
       "C++",
+      "Cobol",
       "CUDA",
       "Data Engineer",
       "Data Scraping",
@@ -33,6 +34,7 @@
       "Flutter",
       "Golang",
       "Intern",
+      "Java ", // Ending space is must otherwise it will match with JavaScript
       "Java Developer",
       "Java Software Engineer",
       "Kotlin",
@@ -73,6 +75,7 @@
   };
 
   const StaticText = {
+    EasyApply: "Easy Apply",
     IsAppliedParsed: "is-applied-parsed",
     NotAcceptingApplications: "No longer accepting applications",
     AlreadyApplied: "Applied ",
@@ -105,7 +108,7 @@
     DiscardApplicationButton: "button[data-test-dialog-secondary-btn]",
     PostApplyModal: "[aria-labelledby='post-apply-modal']",
     JobDetail: ".jobs-search__job-details",
-    NotAcceptingApplications: ".jobs-details-top-card__apply-error",
+    //NotAcceptingApplications: ".jobs-details-top-card__apply-error",
     AlreadyApplied: ".artdeco-inline-feedback__message", //
     DismissJob: ".job-card-list__actions-container button[aria-label^='Dismiss']",
   };
@@ -159,7 +162,7 @@
     // Close the modal
     await closeModal(QuerySelector.ApplicationModal);
 
-    var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton], jobCardDialog);
+    var discardButton = await waitForElement([QuerySelector.DiscardApplicationButton]); //, jobCardDialog
     discardButton.click();
 
     await delay(1000);
@@ -318,11 +321,23 @@
 
     await delay(1000);
 
+    // Click Easy Apply button
+    const easyApplyButton = await waitForElement([QuerySelector.EasyApplyButton]);
+    if (!easyApplyButton || easyApplyButton.innerText.trim() !== StaticText.EasyApply) {
+      log("Easy Apply button not found. Skipping...");
+      countSkipped++;
+      return false;
+    }
+
     // Check if the job has already been applied to
     const jobStateElement = document.querySelector(QuerySelector.AlreadyApplied);
     if (jobStateElement) {
       if (jobStateElement.innerText.trim().startsWith(MatchingData.Applied)) {
         log(`Job already applied. Skipping...`);
+        countSkipped++;
+        return false; // Skip the rest of the loop and go to the next iteration
+      } else if (jobStateElement.innerText.trim().startsWith(StaticText.NotAcceptingApplications)) {
+        log(`Job not accepting applications. Skipping...`);
         countSkipped++;
         return false; // Skip the rest of the loop and go to the next iteration
       } else if (jobStateElement.innerText.trim().indexOf(StaticText.EasyApplyDailyLimit) > -1) {
@@ -335,13 +350,6 @@
       }
     }
 
-    // Click Easy Apply button
-    const easyApplyButton = await waitForElement([QuerySelector.EasyApplyButton]);
-    if (!easyApplyButton) {
-      log("Easy Apply button not found. Skipping...");
-      countSkipped++;
-      return false;
-    }
     easyApplyButton.click();
 
     log("Easy Apply button clicked.");
@@ -498,7 +506,7 @@
             question.indexOf("Current Cost to Company") > -1
           ) {
             addAnsweredClass(questionLabel);
-            await simulateTyping(answerTextbox, "3600000");
+            await simulateTyping(answerTextbox, "3300000");
           } else if (
             question.indexOf("expected ctc") > -1 ||
             question.indexOf("ectc") > -1 ||
@@ -507,16 +515,16 @@
             question.indexOf("Expected Cost to Company") > -1
           ) {
             addAnsweredClass(questionLabel);
-            await simulateTyping(answerTextbox, "4200000");
+            await simulateTyping(answerTextbox, "3900000");
           } else if (question.indexOf("location") > -1) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "Jaipur");
           } else if (question.indexOf("join") > -1 || question.indexOf("notice period") > -1) {
             addAnsweredClass(questionLabel);
-            await simulateTyping(answerTextbox, "7");
+            await simulateTyping(answerTextbox, "30");
           } else if (question.indexOf("immediate basis") > -1 || question.indexOf("notice period") > -1) {
             addAnsweredClass(questionLabel);
-            await simulateTyping(answerTextbox, "7");
+            await simulateTyping(answerTextbox, "30");
           } else if (question.indexOf("experience") > -1 && (question.indexOf("reactjs") > -1 || question.indexOf("react.js") > -1)) {
             addAnsweredClass(questionLabel);
             await simulateTyping(answerTextbox, "3");
